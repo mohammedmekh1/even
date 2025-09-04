@@ -43,8 +43,9 @@ class IMPRO_Shortcodes {
      * @return string Shortcode output.
      */
     public function invitation_page_shortcode( $atts ) {
+        $token = ! empty( $_GET['token'] ) ? sanitize_text_field( $_GET['token'] ) : get_query_var( 'invitation_token' );
         $atts = shortcode_atts( array(
-            'token' => get_query_var( 'invitation_token' ),
+            'token' => $token,
             'template' => 'default'
         ), $atts );
 
@@ -69,8 +70,9 @@ class IMPRO_Shortcodes {
      * @return string Shortcode output.
      */
     public function rsvp_form_shortcode( $atts ) {
+        $token = ! empty( $_GET['token'] ) ? sanitize_text_field( $_GET['token'] ) : get_query_var( 'invitation_token' );
         $atts = shortcode_atts( array(
-            'token' => get_query_var( 'invitation_token' ),
+            'token' => $token,
             'style' => 'default'
         ), $atts );
 
@@ -134,7 +136,7 @@ class IMPRO_Shortcodes {
         ), $atts );
 
         $event_id = intval( $atts['event_id'] );
-        
+
         if ( $event_id ) {
             $rsvp_manager = new IMPRO_RSVP_Manager();
             $stats = $rsvp_manager->get_event_rsvp_statistics( $event_id );
@@ -191,7 +193,7 @@ class IMPRO_Shortcodes {
         ), $atts );
 
         $event_id = intval( $atts['event_id'] );
-        
+
         if ( $event_id ) {
             $rsvp_manager = new IMPRO_RSVP_Manager();
             $stats = $rsvp_manager->get_event_rsvp_statistics( $event_id );
@@ -220,7 +222,7 @@ class IMPRO_Shortcodes {
         ), $atts );
 
         $event_id = intval( $atts['event_id'] );
-        
+
         if ( ! $event_id ) {
             return '<div class="impro-error">' . __( 'معرف المناسبة مطلوب', 'invitation-manager-pro' ) . '</div>';
         }
@@ -263,7 +265,7 @@ class IMPRO_Shortcodes {
         ), $atts );
 
         $event_id = intval( $atts['event_id'] );
-        
+
         if ( ! $event_id ) {
             return '<div class="impro-error">' . __( 'معرف المناسبة مطلوب', 'invitation-manager-pro' ) . '</div>';
         }
@@ -312,8 +314,7 @@ class IMPRO_Shortcodes {
             return '<div class="impro-error">' . __( 'الدعوة غير موجودة', 'invitation-manager-pro' ) . '</div>';
         }
 
-        $public = new IMPRO_Public();
-        $invitation_url = $public->get_invitation_url( $invitation->token );
+        $invitation_url = self::get_invitation_url( $invitation->unique_token );
         $link_text = $atts['text'] ?: __( 'عرض الدعوة', 'invitation-manager-pro' );
 
         return sprintf(
@@ -343,7 +344,7 @@ class IMPRO_Shortcodes {
         // Check for custom template
         $template_file = "impro-invitation-{$template}.php";
         $custom_template = locate_template( $template_file );
-        
+
         if ( $custom_template ) {
             include $custom_template;
         } else {
@@ -371,7 +372,7 @@ class IMPRO_Shortcodes {
         // Check for custom template
         $template_file = "impro-rsvp-{$style}.php";
         $custom_template = locate_template( $template_file );
-        
+
         if ( $custom_template ) {
             include $custom_template;
         } else {
@@ -387,21 +388,21 @@ class IMPRO_Shortcodes {
      */
     private function display_event_list( $events, $atts ) {
         $template_class = 'impro-event-list impro-event-list-' . esc_attr( $atts['template'] );
-        
+
         echo '<div class="' . esc_attr( $template_class ) . '">';
-        
+
         foreach ( $events as $event ) {
             echo '<div class="impro-event-item">';
-            
+
             if ( $atts['show_image'] === 'yes' && $event->invitation_image_url ) {
                 echo '<div class="impro-event-image">';
                 echo '<img src="' . esc_url( $event->invitation_image_url ) . '" alt="' . esc_attr( $event->name ) . '">';
                 echo '</div>';
             }
-            
+
             echo '<div class="impro-event-content">';
             echo '<h3 class="impro-event-title">' . esc_html( $event->name ) . '</h3>';
-            
+
             if ( $atts['show_date'] === 'yes' ) {
                 echo '<div class="impro-event-date">';
                 echo '<span class="impro-event-date-label">' . __( 'التاريخ:', 'invitation-manager-pro' ) . '</span> ';
@@ -411,24 +412,24 @@ class IMPRO_Shortcodes {
                 }
                 echo '</div>';
             }
-            
+
             if ( $atts['show_venue'] === 'yes' ) {
                 echo '<div class="impro-event-venue">';
                 echo '<span class="impro-event-venue-label">' . __( 'المكان:', 'invitation-manager-pro' ) . '</span> ';
                 echo esc_html( $event->venue );
                 echo '</div>';
             }
-            
+
             if ( $atts['show_description'] === 'yes' && $event->description ) {
                 echo '<div class="impro-event-description">';
                 echo wp_kses_post( wp_trim_words( $event->description, 20 ) );
                 echo '</div>';
             }
-            
+
             echo '</div>'; // .impro-event-content
             echo '</div>'; // .impro-event-item
         }
-        
+
         echo '</div>'; // .impro-event-list
     }
 
@@ -440,38 +441,38 @@ class IMPRO_Shortcodes {
      */
     private function display_rsvp_stats( $stats, $atts ) {
         echo '<div class="impro-rsvp-stats">';
-        
+
         if ( $atts['show_numbers'] === 'yes' ) {
             echo '<div class="impro-rsvp-numbers">';
             echo '<div class="impro-stat-item impro-stat-accepted">';
             echo '<span class="impro-stat-number">' . number_format( $stats['accepted'] ) . '</span>';
             echo '<span class="impro-stat-label">' . __( 'موافق', 'invitation-manager-pro' ) . '</span>';
             echo '</div>';
-            
+
             echo '<div class="impro-stat-item impro-stat-declined">';
             echo '<span class="impro-stat-number">' . number_format( $stats['declined'] ) . '</span>';
             echo '<span class="impro-stat-label">' . __( 'معتذر', 'invitation-manager-pro' ) . '</span>';
             echo '</div>';
-            
+
             echo '<div class="impro-stat-item impro-stat-pending">';
             echo '<span class="impro-stat-number">' . number_format( $stats['pending'] ) . '</span>';
             echo '<span class="impro-stat-label">' . __( 'في الانتظار', 'invitation-manager-pro' ) . '</span>';
             echo '</div>';
             echo '</div>';
         }
-        
+
         if ( $atts['show_percentages'] === 'yes' && $stats['total'] > 0 ) {
             $accepted_percent = round( ( $stats['accepted'] / $stats['total'] ) * 100, 1 );
             $declined_percent = round( ( $stats['declined'] / $stats['total'] ) * 100, 1 );
             $pending_percent = round( ( $stats['pending'] / $stats['total'] ) * 100, 1 );
-            
+
             echo '<div class="impro-rsvp-percentages">';
             echo '<div class="impro-percentage-bar">';
             echo '<div class="impro-percentage-accepted" style="width: ' . $accepted_percent . '%"></div>';
             echo '<div class="impro-percentage-declined" style="width: ' . $declined_percent . '%"></div>';
             echo '<div class="impro-percentage-pending" style="width: ' . $pending_percent . '%"></div>';
             echo '</div>';
-            
+
             echo '<div class="impro-percentage-labels">';
             echo '<span class="impro-percentage-label impro-percentage-label-accepted">' . $accepted_percent . '% ' . __( 'موافق', 'invitation-manager-pro' ) . '</span>';
             echo '<span class="impro-percentage-label impro-percentage-label-declined">' . $declined_percent . '% ' . __( 'معتذر', 'invitation-manager-pro' ) . '</span>';
@@ -479,13 +480,13 @@ class IMPRO_Shortcodes {
             echo '</div>';
             echo '</div>';
         }
-        
+
         if ( $atts['show_chart'] === 'yes' ) {
             echo '<div class="impro-rsvp-chart" data-chart-type="' . esc_attr( $atts['chart_type'] ) . '">';
             echo '<canvas id="impro-rsvp-chart-' . uniqid() . '" data-accepted="' . esc_attr( $stats['accepted'] ) . '" data-declined="' . esc_attr( $stats['declined'] ) . '" data-pending="' . esc_attr( $stats['pending'] ) . '"></canvas>';
             echo '</div>';
         }
-        
+
         echo '</div>';
     }
 
@@ -498,9 +499,9 @@ class IMPRO_Shortcodes {
     private function display_countdown( $event_datetime, $atts ) {
         $countdown_id = 'impro-countdown-' . uniqid();
         $countdown_class = 'impro-countdown impro-countdown-' . esc_attr( $atts['format'] );
-        
+
         echo '<div id="' . esc_attr( $countdown_id ) . '" class="' . esc_attr( $countdown_class ) . '" data-target="' . esc_attr( $event_datetime ) . '">';
-        
+
         if ( $atts['format'] === 'full' ) {
             echo '<div class="impro-countdown-item">';
             echo '<span class="impro-countdown-number" data-unit="days">0</span>';
@@ -508,21 +509,21 @@ class IMPRO_Shortcodes {
                 echo '<span class="impro-countdown-label">' . __( 'يوم', 'invitation-manager-pro' ) . '</span>';
             }
             echo '</div>';
-            
+
             echo '<div class="impro-countdown-item">';
             echo '<span class="impro-countdown-number" data-unit="hours">0</span>';
             if ( $atts['show_labels'] === 'yes' ) {
                 echo '<span class="impro-countdown-label">' . __( 'ساعة', 'invitation-manager-pro' ) . '</span>';
             }
             echo '</div>';
-            
+
             echo '<div class="impro-countdown-item">';
             echo '<span class="impro-countdown-number" data-unit="minutes">0</span>';
             if ( $atts['show_labels'] === 'yes' ) {
                 echo '<span class="impro-countdown-label">' . __( 'دقيقة', 'invitation-manager-pro' ) . '</span>';
             }
             echo '</div>';
-            
+
             echo '<div class="impro-countdown-item">';
             echo '<span class="impro-countdown-number" data-unit="seconds">0</span>';
             if ( $atts['show_labels'] === 'yes' ) {
@@ -532,9 +533,9 @@ class IMPRO_Shortcodes {
         } else {
             echo '<span class="impro-countdown-compact" data-format="compact"></span>';
         }
-        
+
         echo '</div>';
-        
+
         // Add countdown JavaScript
         $this->add_countdown_script();
     }
@@ -548,25 +549,25 @@ class IMPRO_Shortcodes {
     private function display_guest_list( $guests, $atts ) {
         $columns = max( 1, min( 6, intval( $atts['columns'] ) ) );
         $list_class = 'impro-guest-list impro-guest-list-columns-' . $columns;
-        
+
         echo '<div class="' . esc_attr( $list_class ) . '">';
-        
+
         foreach ( $guests as $guest ) {
             echo '<div class="impro-guest-item impro-guest-status-' . esc_attr( $guest->rsvp_status ?: 'pending' ) . '">';
-            
+
             if ( $atts['show_avatar'] === 'yes' ) {
                 echo '<div class="impro-guest-avatar">';
                 echo get_avatar( $guest->email ?: '', 40 );
                 echo '</div>';
             }
-            
+
             echo '<div class="impro-guest-info">';
             echo '<div class="impro-guest-name">' . esc_html( $guest->name ) . '</div>';
-            
+
             if ( $atts['show_category'] === 'yes' && $guest->category ) {
                 echo '<div class="impro-guest-category">' . esc_html( $guest->category ) . '</div>';
             }
-            
+
             if ( $atts['show_plus_one'] === 'yes' && $guest->plus_one_attending ) {
                 echo '<div class="impro-guest-plus-one">';
                 echo __( 'مع مرافق', 'invitation-manager-pro' );
@@ -575,11 +576,11 @@ class IMPRO_Shortcodes {
                 }
                 echo '</div>';
             }
-            
+
             echo '</div>'; // .impro-guest-info
             echo '</div>'; // .impro-guest-item
         }
-        
+
         echo '</div>'; // .impro-guest-list
     }
 
@@ -588,50 +589,50 @@ class IMPRO_Shortcodes {
      */
     private function add_countdown_script() {
         static $script_added = false;
-        
+
         if ( $script_added ) {
             return;
         }
-        
+
         $script_added = true;
-        
+
         wp_add_inline_script( 'impro-public-script', '
             document.addEventListener("DOMContentLoaded", function() {
                 const countdowns = document.querySelectorAll(".impro-countdown");
-                
+
                 countdowns.forEach(function(countdown) {
                     const target = parseInt(countdown.dataset.target) * 1000;
-                    
+
                     function updateCountdown() {
                         const now = new Date().getTime();
                         const distance = target - now;
-                        
+
                         if (distance < 0) {
                             countdown.innerHTML = "' . esc_js( __( 'انتهت المناسبة', 'invitation-manager-pro' ) ) . '";
                             return;
                         }
-                        
+
                         const days = Math.floor(distance / (1000 * 60 * 60 * 24));
                         const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                         const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
                         const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-                        
+
                         const daysEl = countdown.querySelector("[data-unit=\"days\"]");
                         const hoursEl = countdown.querySelector("[data-unit=\"hours\"]");
                         const minutesEl = countdown.querySelector("[data-unit=\"minutes\"]");
                         const secondsEl = countdown.querySelector("[data-unit=\"seconds\"]");
                         const compactEl = countdown.querySelector("[data-format=\"compact\"]");
-                        
+
                         if (daysEl) daysEl.textContent = days;
                         if (hoursEl) hoursEl.textContent = hours;
                         if (minutesEl) minutesEl.textContent = minutes;
                         if (secondsEl) secondsEl.textContent = seconds;
-                        
+
                         if (compactEl) {
                             compactEl.textContent = days + "d " + hours + "h " + minutes + "m " + seconds + "s";
                         }
                     }
-                    
+
                     updateCountdown();
                     setInterval(updateCountdown, 1000);
                 });
@@ -653,4 +654,3 @@ class IMPRO_Shortcodes {
         return home_url( '/invitation/' . $token );
     }
 }
-
