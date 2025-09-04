@@ -196,8 +196,8 @@ class IMPRO_Validator {
             return false;
         }
 
-        // Check token format (should be 32 characters alphanumeric)
-        if ( ! preg_match( '/^[a-zA-Z0-9]{32}$/', $token ) ) {
+        // Check token format (should be 64 characters alphanumeric)
+        if ( ! preg_match( '/^[a-zA-Z0-9]{64}$/', $token ) ) {
             return false;
         }
 

@@ -31,8 +31,6 @@ class IMPRO_Public {
         add_action( 'template_redirect', array( $this, 'handle_invitation_page' ) );
         add_action( 'wp_ajax_impro_submit_rsvp', array( $this, 'ajax_submit_rsvp' ) );
         add_action( 'wp_ajax_nopriv_impro_submit_rsvp', array( $this, 'ajax_submit_rsvp' ) );
-        add_shortcode( 'impro_invitation_page', array( $this, 'invitation_page_shortcode' ) );
-        add_shortcode( 'impro_rsvp_form', array( $this, 'rsvp_form_shortcode' ) );
         add_filter( 'query_vars', array( $this, 'add_query_vars' ) );
     }
 
@@ -150,87 +148,6 @@ class IMPRO_Public {
         exit;
     }
 
-    /**
-     * Invitation page shortcode.
-     *
-     * @param array $atts Shortcode attributes.
-     * @return string Shortcode output.
-     */
-    public function invitation_page_shortcode( $atts ) {
-        $atts = shortcode_atts( array(
-            'token' => get_query_var( 'invitation_token' )
-        ), $atts );
-
-        if ( ! $atts['token'] ) {
-            return __( 'رمز الدعوة مطلوب', 'invitation-manager-pro' );
-        }
-
-        // Validate token
-        $security = new IMPRO_Security();
-        if ( ! $security->validate_invitation_token( $atts['token'] ) ) {
-            return __( 'رابط الدعوة غير صحيح أو منتهي الصلاحية', 'invitation-manager-pro' );
-        }
-
-        ob_start();
-        $this->display_invitation_content( $atts['token'] );
-        return ob_get_clean();
-    }
-
-    /**
-     * RSVP form shortcode.
-     *
-     * @param array $atts Shortcode attributes.
-     * @return string Shortcode output.
-     */
-    public function rsvp_form_shortcode( $atts ) {
-        $atts = shortcode_atts( array(
-            'token' => get_query_var( 'invitation_token' )
-        ), $atts );
-
-        if ( ! $atts['token'] ) {
-            return __( 'رمز الدعوة مطلوب', 'invitation-manager-pro' );
-        }
-
-        ob_start();
-        $this->display_rsvp_form( $atts['token'] );
-        return ob_get_clean();
-    }
-
-    /**
-     * Display invitation content.
-     *
-     * @param string $token Invitation token.
-     */
-    private function display_invitation_content( $token ) {
-        $invitation_manager = new IMPRO_Invitation_Manager();
-        $guest_manager = new IMPRO_Guest_Manager();
-        $event_manager = new IMPRO_Event_Manager();
-
-        $invitation = $invitation_manager->get_invitation_by_token( $token );
-        $guest = $guest_manager->get_guest( $invitation->guest_id );
-        $event = $event_manager->get_event( $invitation->event_id );
-
-        include IMPRO_PATH . 'public/invitation-content.php';
-    }
-
-    /**
-     * Display RSVP form.
-     *
-     * @param string $token Invitation token.
-     */
-    private function display_rsvp_form( $token ) {
-        $invitation_manager = new IMPRO_Invitation_Manager();
-        $guest_manager = new IMPRO_Guest_Manager();
-        $event_manager = new IMPRO_Event_Manager();
-        $rsvp_manager = new IMPRO_RSVP_Manager();
-
-        $invitation = $invitation_manager->get_invitation_by_token( $token );
-        $guest = $guest_manager->get_guest( $invitation->guest_id );
-        $event = $event_manager->get_event( $invitation->event_id );
-        $rsvp = $rsvp_manager->get_rsvp_by_guest_event( $invitation->guest_id, $invitation->event_id );
-
-        include IMPRO_PATH . 'public/rsvp-form.php';
-    }
 
     /**
      * AJAX submit RSVP.
